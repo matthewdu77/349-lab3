@@ -1,2 +1,5 @@
 *.dep
-*.bin
+*bin*
+*.o
+*.conf
+*.a

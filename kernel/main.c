@@ -1,4 +1,7 @@
 #include <exports.h>
+#include <bits/errno.h>
+#include <bits/fileno.h>
+#include <bits/swi.h>
 
 #include <arm/psr.h>
 #include <arm/exception.h>
@@ -59,7 +62,7 @@ int kmain(int argc, char** argv, uint32_t table)
   /* any implications on code executed before this. */
   global_data = table;
 
-  if (check_swi_vector() == FALSE)
+  if (check_swi_vector() == false)
   {
     return BAD_CODE;
   }
@@ -109,27 +112,27 @@ int check_mem(char *buf, int count, unsigned start, unsigned end)
 
   if ((start_buf < start) || (start_buf > end)) 
   {
-    return FALSE;
+    return false;
   }
   if ((end_buf < start) || (end_buf > end)) 
   {
-    return FALSE;
+    return false;
   }
   // Overflow case.
   if (start_buf >= end_buf)
   {
-    return FALSE;
+    return false;
   }
 
-  return TRUE;
+  return true;
 }
 
 // write function to replace the system's write function
 ssize_t write_handler(int fd, const void *buf, size_t count)
 {
   // Check for invalid memory range or file descriptors
-  if (check_mem((char *) buf, (int) count, SDRAM_START, SDRAM_END) == FALSE &&
-      check_mem((char *) buf, (int) count, SFROM_START, SFROM_END) == FALSE)
+  if (check_mem((char *) buf, (int) count, SDRAM_START, SDRAM_END) == false &&
+      check_mem((char *) buf, (int) count, SFROM_START, SFROM_END) == false)
   {
     exit_handler(-EFAULT);
   }
@@ -139,7 +142,7 @@ ssize_t write_handler(int fd, const void *buf, size_t count)
   }
 
   char *buffer = (char *) buf;
-  int i;
+  size_t i;
   char read_char;
   for (i = 0; i < count; i++)
   {
@@ -154,7 +157,7 @@ ssize_t write_handler(int fd, const void *buf, size_t count)
 ssize_t read_handler(int fd, void *buf, size_t count)
 {
   // Check for invalid memory range or file descriptors
-  if (check_mem((char *) buf, (int) count, SDRAM_START, SDRAM_END) == FALSE)
+  if (check_mem((char *) buf, (int) count, SDRAM_START, SDRAM_END) == false)
   {
     exit_handler(-EFAULT);
   }
@@ -163,7 +166,7 @@ ssize_t read_handler(int fd, void *buf, size_t count)
     exit_handler(-EBADF);
   }
 
-  int i = 0;
+  size_t i = 0;
   char *buffer = (char *) buf;
   char read_char;
 

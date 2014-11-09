@@ -12,4 +12,5 @@ _start:
 	@ This indirection is needed to guarantee that the program entry point is
 	@ LOAD_ADDR (probably 0xa3000000) without placing strict
 	@ requirements on the layout of kernel.c.
-	b	main
+  mov r2, r8
+	b	kmain
