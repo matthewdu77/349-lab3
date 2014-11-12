@@ -34,19 +34,19 @@ typedef enum {false, true} bool;
 
 uint32_t global_data;
 
-/* Checks the SWI Vector Table. */
-bool check_swi_vector()
+/* Checks the Vector Table. */
+bool check_vector(int exception_num)
 {
-  int swi_vector_instr = *((int *)SWI_VECT_ADDR);
+  int vector_instr = *((int *)(exception_num * 4));
 
   // Check if the offset is negative.
-  if ((swi_vector_instr & LDR_SIGN_MASK) == 0)
+  if ((vector_instr & LDR_SIGN_MASK) == 0)
   {
     return false;
   }
 
   // Check that the instruction is a (LDR pc, [pc, 0x000])
-  if ((swi_vector_instr & 0xFFFFF000) != LDR_PC_PC_INSTR)
+  if ((vector_instr & 0xFFFFF000) != LDR_PC_PC_INSTR)
   {
     return false;
   }
@@ -54,6 +54,39 @@ bool check_swi_vector()
   return true;
 }
 
+void install_exception_handler(int exception_num, int new_handler, int* old_instructions)
+{
+  int vector_address = exception_num * 4;
+
+  // Jump offset already incorporates PC offset. Usually 0x10 or 0x14.
+  int jmp_offset = (*((int *) vector_address))&(0xFFF);
+
+  // &Handler" in Jump Table.
+  int *handler_addr = *(int **)(vector_address + PC_OFFSET + jmp_offset);
+
+  // Save original Uboot handler instructions.
+  old_instructions[0] = *handler_addr;
+  old_instructions[1] = *(handler_addr + 1);
+
+  // Wire in our own: LDR pc, [pc, #-4] = 0xe51ff004
+  *handler_addr = 0xe51ff004;
+  *(handler_addr + 1) = new_handler;
+}
+
+void restore_exception_handler(int exception_num, int* old_instructions)
+{
+  int vector_address = exception_num * 4;
+
+  // Jump offset already incorporates PC offset. Usually 0x10 or 0x14.
+  int jmp_offset = (*((int *) vector_address))&(0xFFF);
+
+  // &Handler" in Jump Table.
+  int *handler_addr = *(int **)(vector_address + PC_OFFSET + jmp_offset);
+
+  // Restore original Uboot handler instructions.
+  *handler_addr = old_instructions[0];
+  *(handler_addr + 1) = old_instructions[1];
+}
 
 int kmain(int argc, char** argv, uint32_t table)
 {
@@ -62,25 +95,13 @@ int kmain(int argc, char** argv, uint32_t table)
   /* any implications on code executed before this. */
   global_data = table;
 
-  if (check_swi_vector() == false)
+  // Installs the swi handler
+  if (check_vector(EX_SWI) == false)
   {
     return BAD_CODE;
   }
-
-  /** Wire in the SWI handler. **/
-  // Jump offset already incorporates PC offset. Usually 0x10 or 0x14.
-  int jmp_offset = (*((int *) SWI_VECT_ADDR))&(0xFFF);
-
-  // &S_Handler" in Jump Table.
-  int *swi_handler_addr = *(int **)(SWI_VECT_ADDR + PC_OFFSET + jmp_offset);
-
-  // Save original Uboot SWI handler instructions.
-  int swi_instr_1 = *swi_handler_addr;
-  int swi_instr_2 = *(swi_handler_addr + 1);
-
-  // Wire in our own: LDR pc, [pc, #-4] = 0xe51ff004
-  *swi_handler_addr = 0xe51ff004;
-  *(swi_handler_addr + 1) = (int) &swi_handler; // New swi handler.
+  int swi_instrs[2] = {0};
+  install_exception_handler(EX_SWI, (int) &swi_handler, swi_instrs);
 
   // Copy argc and argv to user stack in the right order.
   int *spTop = ((int *) USER_STACK_TOP) - 1;
@@ -98,8 +119,7 @@ int kmain(int argc, char** argv, uint32_t table)
 
 
   /** Restore SWI Handler. **/
-  *swi_handler_addr = swi_instr_1;
-  *(swi_handler_addr + 1) = swi_instr_2;
+  restore_exception_handler(EX_SWI, swi_instrs);
 
   return usr_prog_status;
 }
@@ -205,6 +225,16 @@ ssize_t read_handler(int fd, void *buf, size_t count)
   return i;
 }
 
+unsigned long time_handler()
+{
+  return 0;
+}
+
+void sleep_handler(unsigned long millis)
+{
+  return;
+}
+
 /* C_SWI_Handler uses SWI number to call the appropriate function. */
 int C_SWI_Handler(int swiNum, int *regs) 
 {
@@ -222,6 +252,14 @@ int C_SWI_Handler(int swiNum, int *regs)
       // void exit(int status);
     case EXIT_SWI:
       exit_handler((int) regs[0]); // never returns
+      break;
+    case TIME_SWI:
+      // unsigned long time();
+      count = time_handler();
+      break;
+    case SLEEP_SWI:
+      // void sleep(unsigned long millis);
+      sleep_handler((unsigned long) regs[0]);
       break;
     default:
       printf("Error in ref C_SWI_Handler: Invalid SWI number.");
