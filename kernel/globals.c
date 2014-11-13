@@ -8,3 +8,4 @@
 int user_setup_stack_ptr;
 int global_data;
 int timer_ret_address;
+int irq_stack_space[1024];

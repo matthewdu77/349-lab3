@@ -12,6 +12,9 @@
 @   CPSR_SVC = 0x10011 -> CPSR_USER = 0x10000
 
     .extern user_setup_stack_ptr
+    .extern irq_stack_space
+
+    #include <arm/psr.h>
 
     .file   "user_setup.S"
     .text
@@ -27,10 +30,20 @@ user_setup:
     ldr     r2, =user_setup_stack_ptr
     str     sp, [r2] @ *user_setup_stack_ptr = sp
 
+    @ changes mode to IRQ
+    mrs     r2, cpsr
+    orr     r2, r2, #PSR_MODE_IRQ
+    and     r2, r2, #PSR_MODE_IRQ  @ Change mode bits to irq
+    msr     cpsr, r2
+
+    @ sets up irq stack
+    ldr     sp, =irq_stack_space
+
     @ change mode to USER
     mrs     r2, cpsr
-    orr     r2, r2, #0x0C0  @ Mask the flag bits.
-    bic     r2, r2, #0x003  @ Change mode bits to user.
+    orr     r2, r2, #PSR_FIQ  @ Disables fiqs
+    orr     r2, r2, #PSR_MODE_USR
+    and     r2, r2, #PSR_MODE_USR  @ Change mode bits to irq
     msr     cpsr, r2
 
     @ set up user stack from spTop passed in from kernel.c

@@ -11,5 +11,6 @@
 extern int user_setup_stack_ptr;
 extern int global_data;
 extern int timer_ret_address;
+extern int irq_stack_space[1024];
 
 #endif /* GLOBALS_H */

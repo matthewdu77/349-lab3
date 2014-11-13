@@ -11,6 +11,7 @@
 
 #include "globals.h"
 #include "swi_handler.h"
+#include "irq_handler.h"
 #include "user_setup.h"
 #include "exit_handler.h"
 #include "sleep_handler.h"
@@ -102,6 +103,14 @@ int kmain(int argc, char** argv, uint32_t table)
   }
   int swi_instrs[2] = {0};
   install_exception_handler(EX_SWI, (int) &swi_handler, swi_instrs);
+  
+  // Installs the irq handler
+  if (check_vector(EX_IRQ) == false)
+  {
+    return BAD_CODE;
+  }
+  int irq_instrs[2] = {0};
+  install_exception_handler(EX_SWI, (int) &irq_handler, irq_instrs);
 
   // Copy argc and argv to user stack in the right order.
   int *spTop = ((int *) USER_STACK_TOP) - 1;
@@ -113,13 +122,12 @@ int kmain(int argc, char** argv, uint32_t table)
   }
   *spTop = argc;
 
-
   /** Jump to user program. **/
   int usr_prog_status = user_setup(spTop);
 
-
-  /** Restore SWI Handler. **/
+  /** Restore SWI and IRQ Handlers. **/
   restore_exception_handler(EX_SWI, swi_instrs);
+  restore_exception_handler(EX_IRQ, irq_instrs);
 
   return usr_prog_status;
 }
@@ -276,4 +284,3 @@ int C_SWI_Handler(int swiNum, int *regs)
   }
   return count;
 }
-
