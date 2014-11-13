@@ -14,6 +14,7 @@
 #include "user_setup.h"
 #include "exit_handler.h"
 #include "sleep_handler.h"
+#include "C_IRQ_Handler.h"
 
 typedef enum {false, true} bool;
 
@@ -94,6 +95,7 @@ int kmain(int argc, char** argv, uint32_t table)
   /* zero global variables to zero. Make sure to consider */
   /* any implications on code executed before this. */
   global_data = table;
+  system_time = 0;
 
   // Installs the swi handler
   if (check_vector(EX_SWI) == false)
@@ -277,3 +279,28 @@ int C_SWI_Handler(int swiNum, int *regs)
   return count;
 }
 
+int C_IRQ_Handler()
+{
+  uint32_t next_time;
+
+  volatile uint32_t OSCR = reg_read(OSTMR_OSCR_ADDR);
+  volatile uint32_t OSSR = reg_read(OSTMR_OSSR_ADDR);
+  
+  // reacting to an interrupt
+  if (OSSR == 1)
+  {
+    // increment uptime by 10ms
+    system_time += 10;
+
+    // increment the match register
+    next_time = OSCR + (OSTMR_FREQ/1000);
+
+    // setting OSMR to the correct value
+    reg_write(OSTMR_OSMR_ADDR(0), next_time);
+
+    // clear OSSR
+    reg_set(OSTMR_OSSR_ADDR, OSTMR_OSSR_M0);
+  }
+
+  return time_ret_address;
+}
