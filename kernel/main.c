@@ -229,7 +229,7 @@ ssize_t read_handler(int fd, void *buf, size_t count)
 
 unsigned long time_handler()
 {
-  return reg_read(OSTMR_OSCR_ADDR) / (OSTMR_FREQ/1000);
+  return system_time;
 }
 
 void enableTimerInterrupts(unsigned long millis)
