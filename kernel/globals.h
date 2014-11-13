@@ -10,5 +10,6 @@
 
 extern int user_setup_stack_ptr;
 extern int global_data;
+extern int timer_ret_address;
 
 #endif /* GLOBALS_H */

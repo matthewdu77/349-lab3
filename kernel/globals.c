@@ -6,3 +6,5 @@
  */
 
 int user_setup_stack_ptr;
+int global_data;
+int timer_ret_address;

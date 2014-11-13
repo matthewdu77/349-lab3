@@ -13,6 +13,7 @@
 #include "swi_handler.h"
 #include "user_setup.h"
 #include "exit_handler.h"
+#include "sleep_handler.h"
 
 typedef enum {false, true} bool;
 
@@ -32,8 +33,6 @@ typedef enum {false, true} bool;
 #define SFROM_END 0x00ffffff
 #define SDRAM_START 0xa0000000
 #define SDRAM_END 0xa3ffffff
-
-int global_data;
 
 /* Checks the Vector Table. */
 bool check_vector(int exception_num)
@@ -231,9 +230,18 @@ unsigned long time_handler()
   return reg_read(OSTMR_OSCR_ADDR) / (OSTMR_FREQ/1000);
 }
 
-void sleep_handler(unsigned long millis)
+void enableTimerInterrupts(unsigned long millis)
 {
-  return;
+  // activates interupts on this match register
+  reg_set(OSTMR_OIER_ADDR, OSTMR_OIER_E0);
+
+  // sets the 1st timer match register to the proper value
+  int end_time = reg_read(OSTMR_OSCR_ADDR) + millis * (OSTMR_FREQ/1000);
+  reg_write(OSTMR_OSMR_ADDR(0), end_time);
+
+  // in a real system, we'd invoke the scheduler to run some other process,
+  // but here we just loop infinitely
+  while (1);
 }
 
 /* C_SWI_Handler uses SWI number to call the appropriate function. */
