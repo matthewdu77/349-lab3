@@ -22,6 +22,11 @@ swi_handler:
     @ store spsr above gp registers
     str     r2, [sp, #14*4]
 
+    @ restores r8 function table
+    ldr     r8, =global_data
+    ldr     r8, [r8]
+
+
     @ Set Param 1: extract SWI and get SWI no. by bit-masking
     ldr     r0, [lr, #-4]
     bic     r0, r0, #0xff000000

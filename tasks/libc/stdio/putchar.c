@@ -26,7 +26,8 @@
 
 int putchar(int c)
 {
-	write(STDOUT_FILENO, (char *)&c, sizeof(c));
+  char t = (char) c;
+	write(STDOUT_FILENO, (char *)&t, sizeof(t));
 	return c;
 }
 

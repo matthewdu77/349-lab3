@@ -3,4 +3,5 @@
 *.o
 *.conf
 *.a
+*.swp
 kernel/kernel

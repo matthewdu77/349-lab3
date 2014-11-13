@@ -7,6 +7,7 @@
 #include <arm/exception.h>
 #include <arm/interrupt.h>
 #include <arm/timer.h>
+#include <arm/reg.h>
 
 #include "globals.h"
 #include "swi_handler.h"
@@ -32,7 +33,7 @@ typedef enum {false, true} bool;
 #define SDRAM_START 0xa0000000
 #define SDRAM_END 0xa3ffffff
 
-uint32_t global_data;
+int global_data;
 
 /* Checks the Vector Table. */
 bool check_vector(int exception_num)
@@ -139,7 +140,7 @@ int check_mem(char *buf, int count, unsigned start, unsigned end)
     return false;
   }
   // Overflow case.
-  if (start_buf >= end_buf)
+  if (start_buf > end_buf)
   {
     return false;
   }
@@ -227,7 +228,7 @@ ssize_t read_handler(int fd, void *buf, size_t count)
 
 unsigned long time_handler()
 {
-  return 0;
+  return reg_read(OSTMR_OSCR_ADDR);
 }
 
 void sleep_handler(unsigned long millis)

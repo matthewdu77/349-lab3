@@ -9,5 +9,6 @@
 #define GLOBALS_H
 
 extern int user_setup_stack_ptr;
+extern int global_data;
 
 #endif /* GLOBALS_H */
