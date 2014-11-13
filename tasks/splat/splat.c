@@ -6,7 +6,10 @@
  */
 
 #include <stdlib.h>
-#include <bits/fileno.h>
+#include <errno.h>
+#include "bits/fileno.h"
+#include <stdio.h>
+#include <unistd.h>
 
 int main(int argc, char** argv)
 {
