@@ -25,7 +25,7 @@ int main(int argc, char** argv)
     sleep(200);
     write(STDOUT_FILENO, splat3, sizeof(splat3));
     sleep(200);
-    write(STDOUT_FILENO, splat3, sizeof(splat3));
+    write(STDOUT_FILENO, splat4, sizeof(splat3));
     sleep(200);
   }
   return 0;

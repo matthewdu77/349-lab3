@@ -8,6 +8,6 @@
 #ifndef C_IRQ_HANDLER_H
 #define C_IRQ_HANDLER_H
 
-void C_IRQ_Handler();
+int C_IRQ_Handler();
 
 #endif /* C_IRQ_HANDLER_H*/

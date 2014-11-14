@@ -15,6 +15,7 @@
     .extern irq_stack_space
 
     #include <arm/psr.h>
+    #include <bits/swi.h>
 
     .file   "user_setup.S"
     .text
@@ -42,6 +43,7 @@ user_setup:
     @ change mode to USER
     mrs     r2, cpsr
     orr     r2, r2, #PSR_FIQ  @ Disables fiqs
+    bic     r2, r2, #PSR_IRQ  @ Enables irqs
     orr     r2, r2, #PSR_MODE_USR
     and     r2, r2, #PSR_MODE_USR  @ Change mode bits to irq
     msr     cpsr, r2

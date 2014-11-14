@@ -10,7 +10,11 @@
 
 extern int user_setup_stack_ptr;
 extern int global_data;
-extern int timer_ret_address;
 extern int irq_stack_space[1024];
+
+extern int timer_ret_address;
+extern int timer_active;
+extern unsigned long timer_end_time;
+extern unsigned long system_time;
 
 #endif /* GLOBALS_H */

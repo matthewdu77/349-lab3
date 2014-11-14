@@ -105,14 +105,14 @@ int kmain(int argc, char** argv, uint32_t table)
   }
   int swi_instrs[2] = {0};
   install_exception_handler(EX_SWI, (int) &swi_handler, swi_instrs);
-  
+ 
   // Installs the irq handler
   if (check_vector(EX_IRQ) == false)
   {
     return BAD_CODE;
   }
   int irq_instrs[2] = {0};
-  install_exception_handler(EX_SWI, (int) &irq_handler, irq_instrs);
+  install_exception_handler(EX_IRQ, (int) &irq_handler, irq_instrs);
 
   // Copy argc and argv to user stack in the right order.
   int *spTop = ((int *) USER_STACK_TOP) - 1;
@@ -123,6 +123,17 @@ int kmain(int argc, char** argv, uint32_t table)
     spTop--;
   }
   *spTop = argc;
+
+  printf("jumping\n");
+
+  // activates interupts on the timer match register
+
+  volatile uint32_t OSCR = reg_read(OSTMR_OSCR_ADDR);
+  uint32_t next_time = OSCR + (OSTMR_FREQ/100);
+  printf("time is %d\n", OSCR);
+  printf("next time is %d\n", next_time);
+  reg_write(OSTMR_OSMR_ADDR(0), next_time);
+  reg_set(OSTMR_OIER_ADDR, OSTMR_OIER_E0);
 
   /** Jump to user program. **/
   int usr_prog_status = user_setup(spTop);
@@ -242,12 +253,8 @@ unsigned long time_handler()
 
 void enableTimerInterrupts(unsigned long millis)
 {
-  // activates interupts on this match register
-  reg_set(OSTMR_OIER_ADDR, OSTMR_OIER_E0);
-
-  // sets the 1st timer match register to the proper value
-  int end_time = reg_read(OSTMR_OSCR_ADDR) + millis * (OSTMR_FREQ/1000);
-  reg_write(OSTMR_OSMR_ADDR(0), end_time);
+  timer_end_time = system_time + millis;
+  timer_active = true;
 
   // in a real system, we'd invoke the scheduler to run some other process,
   // but here we just loop infinitely
@@ -289,26 +296,36 @@ int C_SWI_Handler(int swiNum, int *regs)
 
 int C_IRQ_Handler()
 {
-  uint32_t next_time;
+  int ret = -1;
 
   volatile uint32_t OSCR = reg_read(OSTMR_OSCR_ADDR);
   volatile uint32_t OSSR = reg_read(OSTMR_OSSR_ADDR);
-  
+
+  printf("interrupted\n");
   // reacting to an interrupt
   if (OSSR == 1)
   {
+    uint32_t next_time;
+    int ret = -1;
     // increment uptime by 10ms
     system_time += 10;
 
-    // increment the match register
-    next_time = OSCR + (OSTMR_FREQ/1000);
+    // increment the match register by 10 ms
+    next_time = OSCR + (OSTMR_FREQ/100);
 
     // setting OSMR to the correct value
     reg_write(OSTMR_OSMR_ADDR(0), next_time);
 
     // clear OSSR
     reg_set(OSTMR_OSSR_ADDR, OSTMR_OSSR_M0);
+
+    // If it is within 10 ms after timer_end_time and the timer is active
+    if (timer_active && (system_time - timer_end_time) < 10)
+    { 
+      ret = timer_ret_address;
+      timer_active = false;
+    }
   }
 
-  return time_ret_address;
+  return ret;
 }
