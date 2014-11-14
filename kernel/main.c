@@ -124,16 +124,16 @@ int kmain(int argc, char** argv, uint32_t table)
   }
   *spTop = argc;
 
-  printf("jumping\n");
-
-  // activates interupts on the timer match register
-
-  volatile uint32_t OSCR = reg_read(OSTMR_OSCR_ADDR);
-  uint32_t next_time = OSCR + (OSTMR_FREQ/100);
-  printf("time is %d\n", OSCR);
-  printf("next time is %d\n", next_time);
-  reg_write(OSTMR_OSMR_ADDR(0), next_time);
+  uint32_t ostmr1_bit = 1 << INT_OSTMR_0;
+  // activates interrupts on the timer match register
+  reg_set(INT_ICMR_ADDR, ostmr1_bit);
+  reg_clear(INT_ICCR_ADDR, ostmr1_bit);
   reg_set(OSTMR_OIER_ADDR, OSTMR_OIER_E0);
+
+  // resets clock to 0 and schedules an interrupt in 10 ms
+  reg_write(OSTMR_OSCR_ADDR, 0);
+  uint32_t next_time = OSTMR_FREQ/100;
+  reg_write(OSTMR_OSMR_ADDR(0), next_time);
 
   /** Jump to user program. **/
   int usr_prog_status = user_setup(spTop);
@@ -301,7 +301,6 @@ int C_IRQ_Handler()
   volatile uint32_t OSCR = reg_read(OSTMR_OSCR_ADDR);
   volatile uint32_t OSSR = reg_read(OSTMR_OSSR_ADDR);
 
-  printf("interrupted\n");
   // reacting to an interrupt
   if (OSSR == 1)
   {
@@ -326,6 +325,5 @@ int C_IRQ_Handler()
       timer_active = false;
     }
   }
-
   return ret;
 }

@@ -33,8 +33,8 @@ user_setup:
 
     @ changes mode to IRQ
     mrs     r2, cpsr
-    orr     r2, r2, #PSR_MODE_IRQ
-    and     r2, r2, #PSR_MODE_IRQ  @ Change mode bits to irq
+    bic     r2, r2, #PSR_MODE
+    orr     r2, r2, #PSR_MODE_IRQ  @ Change mode bits to irq
     msr     cpsr, r2
 
     @ sets up irq stack
@@ -44,8 +44,8 @@ user_setup:
     mrs     r2, cpsr
     orr     r2, r2, #PSR_FIQ  @ Disables fiqs
     bic     r2, r2, #PSR_IRQ  @ Enables irqs
-    orr     r2, r2, #PSR_MODE_USR
-    and     r2, r2, #PSR_MODE_USR  @ Change mode bits to irq
+    bic     r2, r2, #PSR_MODE
+    and     r2, r2, #PSR_MODE_USR  @ Change mode bits to usr
     msr     cpsr, r2
 
     @ set up user stack from spTop passed in from kernel.c
