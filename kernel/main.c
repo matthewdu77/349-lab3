@@ -264,6 +264,7 @@ void enableTimerInterrupts(unsigned long millis)
 /* C_SWI_Handler uses SWI number to call the appropriate function. */
 int C_SWI_Handler(int swiNum, int *regs) 
 {
+  printf("swi handler: %d\n", swiNum);
   int count = 0;
   switch (swiNum)
   {
@@ -291,11 +292,13 @@ int C_SWI_Handler(int swiNum, int *regs)
       printf("Error in ref C_SWI_Handler: Invalid SWI number.");
       exit_handler(BAD_CODE); // never returns
   }
+  printf("returning\n");
   return count;
 }
 
 int C_IRQ_Handler()
 {
+  printf("interrupted\n");
   int ret = -1;
 
   volatile uint32_t OSCR = reg_read(OSTMR_OSCR_ADDR);
@@ -325,5 +328,11 @@ int C_IRQ_Handler()
       timer_active = false;
     }
   }
+  printf("interrupt over\n");
   return ret;
+}
+
+void print_int(int i)
+{
+  printf("%x\n", i);
 }

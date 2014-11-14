@@ -7,7 +7,7 @@
 
 int user_setup_stack_ptr;
 int global_data;
-int irq_stack_space[1024];
+int irq_stack_space[2049];
 
 int timer_ret_address;
 int timer_active;

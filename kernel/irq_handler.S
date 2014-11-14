@@ -11,8 +11,11 @@
 
     .global irq_handler
 irq_handler:
+    adds pc, lr, #4
+
     sub     sp, sp, #4
-    stmfd   sp!, {r0-r12, lr}
+    stmfd   sp!, {r0-r12}
+    stmfd   sp!, {lr}
 
     @ get spsr into general purpose (gp) registers
     mrs     r2, spsr
@@ -29,18 +32,20 @@ irq_handler:
 
     @ set return address appropriately depending on the return value of
     @ the handler. (If r0 != -1), then lr = r0. Otherwise, lr = saved value
-    mov     lr, r0
-    ldmfd   sp!, {r1}
+    /*
     add     r0, r0, #1
-    movne   lr, r1
+    subne   lr, r0, #1
+    */
 
     @ restore spsr
     ldr     r2, [sp, #14*4]
     msr     spsr, r2
 
     @ restore registers.
+    ldmfd   sp!, {lr}
     ldmfd   sp!, {r0-r12}
 
     @ remove space used to store spsr
     add     sp, sp, #4
     movs    pc, lr
+

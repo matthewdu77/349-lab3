@@ -17,8 +17,10 @@
     #include <arm/psr.h>
     #include <bits/swi.h>
 
+    .extern print_int
     .file   "user_setup.S"
     .text
+
 
     .global user_setup
 user_setup:
@@ -39,6 +41,9 @@ user_setup:
 
     @ sets up irq stack
     ldr     sp, =irq_stack_space
+    ldr     r2, =0x00002000
+    add     sp, sp, r2
+
 
     @ change mode to USER
     mrs     r2, cpsr

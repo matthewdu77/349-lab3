@@ -18,14 +18,16 @@ int main(int argc, char** argv)
 
   while (1)
   {
+    printf("hello");
+    continue;
     printf("> ");
    
     // get first char, ignoring newlines and EOT characters
-    do 
+    //do 
     {
       num_chars = read(STDIN_FILENO, &first, 1);
     } 
-    while(num_chars == 0 || first == '\n' || first == 4);
+    //while(num_chars == 0 || first == '\n' || first == 4);
 
     // after getting the first char, load the time
     unsigned long initial_time = time();
