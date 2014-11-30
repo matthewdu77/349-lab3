@@ -15,7 +15,6 @@
 #include "user_setup.h"
 #include "exit_handler.h"
 #include "sleep_handler.h"
-#include "C_IRQ_Handler.h"
 
 typedef enum {false, true} bool;
 
@@ -251,20 +250,15 @@ unsigned long time_handler()
   return system_time;
 }
 
-void enableTimerInterrupts(unsigned long millis)
+void sleep_handler(unsigned long millis)
 {
-  timer_end_time = system_time + millis;
-  timer_active = true;
-
-  // in a real system, we'd invoke the scheduler to run some other process,
-  // but here we just loop infinitely
-  while (1);
+  unsigned long timer_start_time = system_time;
+  while (system_time - timer_start_time  < millis);
 }
 
 /* C_SWI_Handler uses SWI number to call the appropriate function. */
 int C_SWI_Handler(int swiNum, int *regs) 
 {
-  printf("swi handler: %d\n", swiNum);
   int count = 0;
   switch (swiNum)
   {
@@ -292,15 +286,11 @@ int C_SWI_Handler(int swiNum, int *regs)
       printf("Error in ref C_SWI_Handler: Invalid SWI number.");
       exit_handler(BAD_CODE); // never returns
   }
-  printf("returning\n");
   return count;
 }
 
-int C_IRQ_Handler()
+void C_IRQ_Handler()
 {
-  printf("interrupted\n");
-  int ret = -1;
-
   volatile uint32_t OSCR = reg_read(OSTMR_OSCR_ADDR);
   volatile uint32_t OSSR = reg_read(OSTMR_OSSR_ADDR);
 
@@ -308,7 +298,6 @@ int C_IRQ_Handler()
   if (OSSR == 1)
   {
     uint32_t next_time;
-    int ret = -1;
     // increment uptime by 10ms
     system_time += 10;
 
@@ -321,18 +310,5 @@ int C_IRQ_Handler()
     // clear OSSR
     reg_set(OSTMR_OSSR_ADDR, OSTMR_OSSR_M0);
 
-    // If it is within 10 ms after timer_end_time and the timer is active
-    if (timer_active && (system_time - timer_end_time) < 10)
-    { 
-      ret = timer_ret_address;
-      timer_active = false;
-    }
   }
-  printf("interrupt over\n");
-  return ret;
-}
-
-void print_int(int i)
-{
-  printf("%x\n", i);
 }

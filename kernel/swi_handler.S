@@ -39,11 +39,6 @@ swi_handler:
     ldr     r0, [lr, #-4]
     bic     r0, r0, #0xff000000
 
-    stmfd sp!, {r0}
-    mrs r0, cpsr
-    bl print_int
-    ldmfd sp!, {r0}
-
     @ Set Param 2: pointer to parameters on stack
     mov     r1, sp
 

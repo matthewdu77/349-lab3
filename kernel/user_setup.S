@@ -44,13 +44,12 @@ user_setup:
     ldr     r2, =0x00002000
     add     sp, sp, r2
 
-
     @ change mode to USER
     mrs     r2, cpsr
     orr     r2, r2, #PSR_FIQ  @ Disables fiqs
     bic     r2, r2, #PSR_IRQ  @ Enables irqs
     bic     r2, r2, #PSR_MODE
-    and     r2, r2, #PSR_MODE_USR  @ Change mode bits to usr
+    orr     r2, r2, #PSR_MODE_USR  @ Change mode bits to usr
     msr     cpsr, r2
 
     @ set up user stack from spTop passed in from kernel.c

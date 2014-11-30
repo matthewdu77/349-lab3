@@ -18,11 +18,10 @@ int main(int argc, char** argv)
 
   while (1)
   {
-    printf("> ");
-   
     // get first char, ignoring newlines and EOT characters
     do 
     {
+      printf("> ");
       num_chars = read(STDIN_FILENO, &first, 1);
     } 
     while(num_chars == 0 || first == '\n' || first == 4);
@@ -40,7 +39,7 @@ int main(int argc, char** argv)
     // writes out what we just read, along with the time in seconds
     putchar(first);
     printf("%s", rest);
-    printf("%d.%3d\n", (int) elapsed_time / 1000, (int) elapsed_time % 1000);
+    printf("%d.%03d\n", (int) elapsed_time / 1000, (int) elapsed_time % 1000);
   }
 	return 0;
 }
